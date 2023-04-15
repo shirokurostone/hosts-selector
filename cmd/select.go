@@ -105,7 +105,13 @@ func ExecuteSelectCmd(config *lib.Config) error {
 		return event
 	})
 
+	commit := false
 	okButton.SetSelectedFunc(func() {
+		commit = true
+		app.Stop()
+	})
+
+	cancelButton.SetSelectedFunc(func() {
 		app.Stop()
 	})
 
@@ -114,20 +120,22 @@ func ExecuteSelectCmd(config *lib.Config) error {
 		return err
 	}
 
-	if err = lib.SaveConfig(configFilePath, config); err != nil {
-		return err
-	}
-	bs, err := os.ReadFile(config.HostsFilePath)
-	if err != nil {
-		return err
-	}
-	content := string(bs)
-	buffer := &bytes.Buffer{}
-	if err := lib.ReplaceHostsFile(content, buffer, config.Hosts); err != nil {
-		return err
-	}
-	if err := os.WriteFile(config.HostsFilePath, buffer.Bytes(), 0666); err != nil {
-		return err
+	if commit {
+		if err = lib.SaveConfig(configFilePath, config); err != nil {
+			return err
+		}
+		bs, err := os.ReadFile(config.HostsFilePath)
+		if err != nil {
+			return err
+		}
+		content := string(bs)
+		buffer := &bytes.Buffer{}
+		if err := lib.ReplaceHostsFile(content, buffer, config.Hosts); err != nil {
+			return err
+		}
+		if err := os.WriteFile(config.HostsFilePath, buffer.Bytes(), 0666); err != nil {
+			return err
+		}
 	}
 
 	return nil
