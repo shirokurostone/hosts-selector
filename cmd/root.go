@@ -45,6 +45,7 @@ func Execute() {
 	rootCmd.AddCommand(newFetchCmd())
 	rootCmd.AddCommand(newNewCmd())
 	rootCmd.AddCommand(newSelectCmd())
+	rootCmd.AddCommand(newToggleCmd())
 	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
