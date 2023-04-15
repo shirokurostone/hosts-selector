@@ -45,6 +45,7 @@ func Execute() {
 	rootCmd.AddCommand(newFetchCmd())
 	rootCmd.AddCommand(newNewCmd())
 	rootCmd.AddCommand(newSelectCmd())
+	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
 	if err := rootCmd.Execute(); err != nil {
