@@ -26,36 +26,37 @@ func newEditCmd() *cobra.Command {
 
 func ExecuteEditCmd(config *lib.Config, name string) error {
 	var err error
-	index := -1
+	var hosts *lib.Hosts = nil
 
 	if name == "" {
-		index, err = SelectHostsFile(config)
+		index, err := SelectHostsFile(config)
 		if err != nil {
 			return err
 		}
+		hosts = &config.Hosts[index]
 	} else {
-		index = config.SearchHostsFileName(name)
+		hosts = config.Hosts.SearchByName(name)
 	}
 
-	result, err := EditHostsFile(config.Hosts[index])
+	result, err := EditHostsFile(*hosts)
 	if err != nil {
 		return err
 	}
-	config.Hosts[index] = result
+	*hosts = result
 
 	return lib.SaveConfig(configFilePath, config)
 }
 
-func EditHostsFile(part lib.HostsFile) (lib.HostsFile, error) {
+func EditHostsFile(part lib.Hosts) (lib.Hosts, error) {
 	f, err := os.CreateTemp("", "hosts")
 	if err != nil {
-		return lib.HostsFile{}, err
+		return lib.Hosts{}, err
 	}
 	defer os.Remove(f.Name())
 
 	err = os.WriteFile(f.Name(), []byte(lib.Marshal(part)), 0600)
 	if err != nil {
-		return lib.HostsFile{}, err
+		return lib.Hosts{}, err
 	}
 
 	c := exec.Command("vim", f.Name())
@@ -63,12 +64,12 @@ func EditHostsFile(part lib.HostsFile) (lib.HostsFile, error) {
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	if err = c.Run(); err != nil {
-		return lib.HostsFile{}, err
+		return lib.Hosts{}, err
 	}
 
 	b, err := os.ReadFile(f.Name())
 	if err != nil {
-		return lib.HostsFile{}, err
+		return lib.Hosts{}, err
 	}
 
 	buffer := string(b)

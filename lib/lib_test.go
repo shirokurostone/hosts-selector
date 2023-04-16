@@ -7,49 +7,15 @@ import (
 	"testing"
 )
 
-func TestMarshal(t *testing.T) {
-	input := HostsFile{
-		Name:        "Name",
-		Description: "Description",
-		Content:     "Content",
-		Url:         "Url",
-		Enabled:     true,
-	}
-	expected := `---
-Name: "Name"
-Description: "Description"
-Url: "Url"
----
-Content`
-
-	actual := Marshal(input)
-	assert.Equal(t, expected, actual)
-}
-
-func TestUnmarshal(t *testing.T) {
-	input := `---
-Name: "Name"
-Description: "Description"
-Url: "Url"
----
-Content`
-	actual, err := Unmarshal(input)
-	require.Nil(t, err)
-	assert.Equal(t, "Name", actual.Name)
-	assert.Equal(t, "Description", actual.Description)
-	assert.Equal(t, "Url", actual.Url)
-	assert.Equal(t, "Content", actual.Content)
-}
-
 func TestReplaceHostsFile(t *testing.T) {
 	tests := []struct {
 		content   string
-		hostsFile []HostsFile
+		hostsFile []Hosts
 		expected  string
 	}{
 		{
 			content: "",
-			hostsFile: []HostsFile{
+			hostsFile: []Hosts{
 				{
 					Name:        "Name",
 					Description: "Description",
@@ -69,12 +35,12 @@ Content
 `,
 		},
 		{
-			content: `# before
+			content: `before
 ########## START hosts-selector ##########
 ########## END   hosts-selector ##########
-# after
+after
 `,
-			hostsFile: []HostsFile{
+			hostsFile: []Hosts{
 				{
 					Name:        "Name",
 					Description: "Description",
@@ -83,7 +49,7 @@ Content
 					Enabled:     true,
 				},
 			},
-			expected: `# before
+			expected: `before
 ########## START hosts-selector ##########
 ########################################
 # Name
@@ -91,7 +57,7 @@ Content
 Content
 
 ########## END   hosts-selector ##########
-# after
+after
 `,
 		},
 	}
@@ -102,4 +68,56 @@ Content
 		require.Nil(t, err)
 		assert.Equal(t, tt.expected, w.String())
 	}
+}
+
+func TestReplaceHostsFile2(t *testing.T) {
+	actual := &bytes.Buffer{}
+	hosts := HostsSet{
+		Hosts{
+			Name:        "hosts1",
+			Description: "description1",
+			Content:     "content1",
+			Url:         "url1",
+			Enabled:     true,
+		},
+		Hosts{
+			Name:        "hosts2",
+			Description: "description2",
+			Content:     "content2",
+			Url:         "url2",
+			Enabled:     false,
+		},
+		Hosts{
+			Name:        "hosts3",
+			Description: "description3",
+			Content:     "content3",
+			Url:         "url3",
+			Enabled:     true,
+		},
+	}
+
+	input := "original hosts"
+	expected := `original hosts
+########## START hosts-selector ##########
+########################################
+# hosts1
+########################################
+content1
+########################################
+# hosts3
+########################################
+content3
+
+########## END   hosts-selector ##########
+`
+	err := ReplaceHostsFile(input, actual, hosts)
+	assert.Nil(t, err)
+	assert.Equal(t, expected, actual.String())
+
+	input = actual.String()
+	actual = &bytes.Buffer{}
+	err = ReplaceHostsFile("original hosts", actual, hosts)
+	assert.Nil(t, err)
+	assert.Equal(t, expected, actual.String())
+
 }

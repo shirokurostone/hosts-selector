@@ -19,7 +19,7 @@ func newNewCmd() *cobra.Command {
 
 func ExecuteNewCmd(config *lib.Config) error {
 
-	part := lib.HostsFile{
+	part := lib.Hosts{
 		Name:        "name",
 		Description: "description",
 		Content:     "",

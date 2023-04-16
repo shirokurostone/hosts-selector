@@ -1,33 +1,15 @@
 package lib
 
 import (
-	"errors"
 	"github.com/pelletier/go-toml/v2"
 	"io"
 	"os"
 	"strings"
 )
 
-type HostsFile struct {
-	Name        string
-	Description string
-	Content     string
-	Url         string
-	Enabled     bool
-}
-
 type Config struct {
-	HostsFilePath string      `toml:"hostsFilePath"`
-	Hosts         []HostsFile `toml:"hosts"`
-}
-
-func (c *Config) SearchHostsFileName(name string) int {
-	for i := range c.Hosts {
-		if name == c.Hosts[i].Name {
-			return i
-		}
-	}
-	return -1
+	HostsFilePath string   `toml:"hostsFilePath"`
+	Hosts         HostsSet `toml:"hosts"`
 }
 
 const DefaultHostsFilePath = "/etc/hosts"
@@ -64,7 +46,7 @@ const (
 	BoundaryEnd   = "\n########## END   hosts-selector ##########\n"
 )
 
-func ReplaceHostsFile(content string, w io.Writer, hosts []HostsFile) error {
+func ReplaceHostsFile(content string, w io.Writer, hosts HostsSet) error {
 
 	sp := strings.Index(content, BoundaryStart)
 	ep := strings.Index(content, BoundaryEnd)
@@ -100,47 +82,3 @@ const (
 	FrontMatterEnd       = "\n---\n"
 	FrontMatterDelimiter = ":"
 )
-
-func Marshal(data HostsFile) string {
-	frontmatter := "---\n" +
-		"Name: \"" + data.Name + "\"\n" +
-		"Description: \"" + data.Description + "\"\n" +
-		"Url: \"" + data.Url + "\"\n" +
-		"---\n"
-
-	return frontmatter + data.Content
-}
-
-func Unmarshal(data string) (HostsFile, error) {
-	if !strings.HasPrefix(data, FrontMatterStart) {
-		return HostsFile{}, errors.New("format error")
-	}
-	be := strings.Index(data, FrontMatterEnd)
-	lines := strings.Split(data[len(FrontMatterStart):be], "\n")
-	meta := make(map[string]string)
-	for _, l := range lines {
-		elements := strings.SplitN(l, FrontMatterDelimiter, 2)
-		if len(elements) != 2 {
-			return HostsFile{}, errors.New("format error")
-		}
-		key := strings.Trim(elements[0], " \t\r\n")
-		value := strings.Trim(elements[1], " \t\r\n")
-		if strings.HasPrefix(value, `"`) && strings.HasSuffix(value, `"`) {
-			value = value[1 : len(value)-1]
-		}
-		meta[key] = value
-	}
-
-	result := HostsFile{}
-	if val, ok := meta["Name"]; ok {
-		result.Name = val
-	}
-	if val, ok := meta["Description"]; ok {
-		result.Description = val
-	}
-	if val, ok := meta["Url"]; ok {
-		result.Url = val
-	}
-	result.Content = data[be+len(FrontMatterEnd):]
-	return result, nil
-}

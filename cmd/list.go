@@ -32,7 +32,11 @@ func newListCmd() *cobra.Command {
 func ExecuteListCmd(config *lib.Config, showEnabled bool, showDisabled bool) error {
 	for _, h := range config.Hosts {
 		if showEnabled && h.Enabled || showDisabled && !h.Enabled {
-			fmt.Println(h.Name)
+			if h.Enabled {
+				fmt.Printf("%s\t%s\n", h.Name, "Enabled")
+			} else {
+				fmt.Printf("%s\t%s\n", h.Name, "Disabled")
+			}
 		}
 	}
 	return nil

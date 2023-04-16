@@ -8,38 +8,72 @@ import (
 	"os"
 )
 
+type UpdateType int
+
+const (
+	toggle UpdateType = iota
+	enable
+	disable
+)
+
 func newToggleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "toggle",
 		Short: "toggle hosts files",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return ExecuteToggleCmd(config, args)
+			return ExecuteToggleCmd(config, toggle, args)
 		},
 	}
 	return cmd
 }
 
-func ExecuteToggleCmd(config *lib.Config, names []string) error {
+func newEnableCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "enable",
+		Short: "enable hosts files",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return ExecuteToggleCmd(config, enable, args)
+		},
+	}
+	return cmd
+}
 
-	affected := []*lib.HostsFile{}
-	hostsfileNotFound := false
+func newDisableCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "disable",
+		Short: "disable hosts files",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return ExecuteToggleCmd(config, disable, args)
+		},
+	}
+	return cmd
+}
+
+func ExecuteToggleCmd(config *lib.Config, t UpdateType, names []string) error {
+
+	affected := []*lib.Hosts{}
+	hostsNotFound := false
 	for _, n := range names {
-		match := false
-		for i, _ := range config.Hosts {
-			if n != config.Hosts[i].Name {
-				continue
-			}
-			match = true
-			config.Hosts[i].Enabled = !config.Hosts[i].Enabled
-			affected = append(affected, &config.Hosts[i])
-		}
-		if !match {
+		hosts := config.Hosts.SearchByName(n)
+		if hosts == nil {
 			fmt.Fprintf(os.Stderr, "hostsfile not found : %s\n", n)
-			hostsfileNotFound = true
+			hostsNotFound = true
+			continue
 		}
+
+		switch t {
+		case toggle:
+			hosts.Enabled = !hosts.Enabled
+		case enable:
+			hosts.Enabled = true
+		case disable:
+			hosts.Enabled = false
+		}
+
+		affected = append(affected, hosts)
 	}
 
-	if hostsfileNotFound {
+	if hostsNotFound {
 		return nil
 	}
 

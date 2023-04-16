@@ -41,12 +41,14 @@ var config *lib.Config
 func Execute() {
 
 	rootCmd := newRootCmd()
+	rootCmd.AddCommand(newDisableCmd())
 	rootCmd.AddCommand(newEditCmd())
+	rootCmd.AddCommand(newEnableCmd())
 	rootCmd.AddCommand(newFetchCmd())
+	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newNewCmd())
 	rootCmd.AddCommand(newSelectCmd())
 	rootCmd.AddCommand(newToggleCmd())
-	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newVersionCmd())
 
 	if err := rootCmd.Execute(); err != nil {

@@ -5,7 +5,7 @@ import (
 	"github.com/shirokurostone/hosts-selector/lib"
 )
 
-func getListItemText(hosts lib.HostsFile) (string, string) {
+func getListItemText(hosts lib.Hosts) (string, string) {
 	if hosts.Enabled {
 		return tview.Escape("[X] " + hosts.Name), tview.Escape("    " + hosts.Description)
 	} else {
